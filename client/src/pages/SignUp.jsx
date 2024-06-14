@@ -27,7 +27,7 @@ function SignUp() {
       if (data.status === 'success') {
         setLoading(false);
         setError(null);
-        navigate('/sign-up');
+        navigate('/signin');
       } else {
         setError(data.message);
       }
