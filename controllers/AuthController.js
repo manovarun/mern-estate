@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
+const bcrypt = require('bcryptjs');
 
 const createSendToken = (user, statusCode, res) => {
   const token = user.getSignedJWTToken();
@@ -59,4 +60,29 @@ exports.signin = asyncHandler(async (req, res, next) => {
     return next(new AppError('Invalid password, please try again', 401));
 
   return createSendToken(user, 201, res);
+});
+
+exports.google = asyncHandler(async (req, res, next) => {
+  const user = await User.findOne({ email: req.body.email });
+
+  if (user) {
+    return createSendToken(user, 201, res);
+  }
+
+  const generatedPassword =
+    Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+  const hashedPassword = bcrypt.hashSync(generatedPassword, 10);
+
+  const newUser = new User({
+    username:
+      req.body.name.split(' ').join('').toLowerCase() +
+      Math.random().toString(36).slice(-4),
+    email: req.body.email,
+    password: hashedPassword,
+    avatar: req.body.photo,
+  });
+
+  await newUser.save();
+
+  return createSendToken(newUser, 201, res);
 });
